@@ -4,4 +4,3 @@ __pycache__/
 stanford-corenlp-4.5.10/
 audio/
 .env
-constants.py
