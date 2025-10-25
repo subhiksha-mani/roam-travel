@@ -59,7 +59,8 @@ def get_nearest_landmarks(lat: float | int, lng: float | int, k=5):
         "palace",  # historic palaces
         "fort",  # forts or citadels
         "castle",  # castles
-        "observatory"  # major observatories
+        "observatory"  # major observatories, 
+        "shopping_district"
     ]
     url = f"https://maps.googleapis.com/maps/api/place/nearbysearch/json"
 
@@ -98,11 +99,12 @@ def get_nearest_landmarks(lat: float | int, lng: float | int, k=5):
 
 def get_prominent_places(top_places):
     city = top_places[0].get("plus_code", {}).get("compound_code", "")
+    print("top places:", top_places)
 
     if top_places:
         max_score = max(p['score'] for p in top_places)
-        prominent_places = [p for p in top_places if p['score'] >= 0.3 * max_score]
-        if prominent_places[0]['score'] <=40:
+        prominent_places = [p for p in top_places if p['score'] >= 0.15 * max_score]
+        if prominent_places[0]['score'] <= 25:
             print("Defaulting to city name as prominent place due to low scores below threshold.")
             prominent_places = [{"name": city, "score": 0}]
 

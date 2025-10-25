@@ -15,6 +15,9 @@ if __name__ == "__main__":
     name = top_place["name"]
 
     response = search_location(top_place, topics)
+    print(response)
     cleaned_context = clean_text(response, topics)
+    print(cleaned_context)
 
-    text_to_speech(cleaned_context)
+    # text_to_speech(cleaned_context)
+
