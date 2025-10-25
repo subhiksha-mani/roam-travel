@@ -55,6 +55,9 @@ if st.session_state.lat is None or st.session_state.lng is None:
     if location:
         st.session_state.lat = location["latitude"]
         st.session_state.lng = location["longitude"]
+        st.session_state.city = None  # will fill via reverse geocoding
+    else:
+        st.stop()  # stop until user allows location
 
 # Fallback to IP if browser location not available
 if st.session_state.lat is None or st.session_state.lng is None:
