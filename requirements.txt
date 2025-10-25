@@ -5,3 +5,5 @@ requests>=2.31.0
 haversine>=2.8.0
 python-dotenv>=1.0.0
 pyngrok>=6.0.0
+streamlit_javascript
+geopy

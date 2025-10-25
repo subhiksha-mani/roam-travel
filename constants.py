@@ -5,7 +5,7 @@
 #
 # OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # PARALLEL_API_KEY = os.getenv("PARALLEL_API_KEY")
-import os
+
 
 import streamlit as st
 

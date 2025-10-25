@@ -2,6 +2,9 @@ import os
 import streamlit as st
 import pandas as pd
 
+from streamlit_javascript import st_javascript
+from geopy.geocoders import Nominatim
+
 from location import get_location_ip, get_nearest_landmarks, get_prominent_places
 from search import search_location
 from data_processing import clean_text
@@ -46,13 +49,34 @@ for key in ["lat", "lng", "prominent_places", "selected_name", "summary", "city"
 # ----------------------
 # Fetch user location
 # ----------------------
-if st.session_state.lat is None or st.session_state.lng is None:
-    with st.spinner("Fetching your location and nearby prominent spots..."):
-        lat, lng, city, region, country = get_location_ip()
-        if lat and lng:
-            st.session_state.lat = lat
-            st.session_state.lng = lng
-            st.session_state.city = city
+# Only fetch if lat/lng not already in session_state
+if st.session_state.get("lat") is None or st.session_state.get("lng") is None:
+    coords = st_javascript(
+        "navigator.geolocation.getCurrentPosition(pos => [pos.coords.latitude, pos.coords.longitude]);"
+    )
+    if coords:
+        st.session_state.lat, st.session_state.lng = coords
+
+# Fallback to IP-based location if browser location not available
+if st.session_state.get("lat") is None or st.session_state.get("lng") is None:
+    lat, lng, city, region, country = get_location_ip()
+    st.session_state.lat = lat
+    st.session_state.lng = lng
+    st.session_state.city = city
+
+# ----------------------
+# Reverse geocode to get city name if missing
+# ----------------------
+if st.session_state.get("lat") and st.session_state.get("lng") and not st.session_state.get("city"):
+    try:
+        geolocator = Nominatim(user_agent="roam_app")
+        location = geolocator.reverse((st.session_state.lat, st.session_state.lng), exactly_one=True)
+        city = location.raw.get("address", {}).get("city") or \
+               location.raw.get("address", {}).get("town") or \
+               location.raw.get("address", {}).get("village")
+        st.session_state.city = city
+    except:
+        st.session_state.city = None
 
 if st.session_state.city:
     st.markdown(
