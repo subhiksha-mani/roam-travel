@@ -46,40 +46,19 @@ for key in ["lat", "lng", "prominent_places", "selected_name", "summary", "city"
 # ----------------------
 # Fetch user location
 # ----------------------
-from streamlit.components.v1 import html
-
-# ----------------------
-# Fetch user location (browser geolocation)
-# ----------------------
 if st.session_state.lat is None or st.session_state.lng is None:
-    # Embed JS to get browser location
-    html("""
-    <script>
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            document.querySelector('#coords').value = lat + ',' + lng;
-        }
-    );
-    </script>
-    <input type="text" id="coords" style="display:none;">
-    """, height=0)
-
-    coords_input = st.text_input("Coordinates (lat,lng):", key="coords")
-
-    if coords_input:
-        try:
-            lat, lng = map(float, coords_input.split(","))
+    with st.spinner("Fetching your location and nearby prominent spots..."):
+        lat, lng, city, region, country = get_location_ip()
+        if lat and lng:
             st.session_state.lat = lat
             st.session_state.lng = lng
-        except:
-            st.warning("Waiting for browser location… please allow access in your browser.")
+            st.session_state.city = city
 
-    if st.session_state.lat and st.session_state.lng:
-        # Optional: reverse geocode to get city name
-        city = get_location_ip()[2]  # keep your current IP-based city fallback
-        st.session_state.city = city
+if st.session_state.city:
+    st.markdown(
+        f"<p style='text-align:center; font-size:20px; font-weight:500;'>Looks like you're in {st.session_state.city}! Learn more about these spots nearby.</p>",
+        unsafe_allow_html=True
+    )
 
 # ----------------------
 # Get nearby landmarks
