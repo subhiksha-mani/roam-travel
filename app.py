@@ -2,7 +2,7 @@ import os
 import streamlit as st
 import pandas as pd
 
-from streamlit_javascript import st_javascript
+from streamlit_geolocation import streamlit_geolocation
 from geopy.geocoders import Nominatim
 
 from location import get_location_ip, get_nearest_landmarks, get_prominent_places
@@ -39,48 +39,52 @@ h1, h2, h3, .tagline {
 st.title("Roam")
 st.markdown('<div class="tagline">Your AI-assisted travel companion.</div>', unsafe_allow_html=True)
 
-# ----------------------
-# Initialize session state
-# ----------------------
+# Get location
 for key in ["lat", "lng", "prominent_places", "selected_name", "summary", "city"]:
     if key not in st.session_state:
         st.session_state[key] = None if key in ["lat", "lng", "city"] else []
 
 # ----------------------
-# Fetch user location
+# Fetch user location using browser first
 # ----------------------
-# Only fetch if lat/lng not already in session_state
-if st.session_state.get("lat") is None or st.session_state.get("lng") is None:
-    coords = st_javascript(
-        "navigator.geolocation.getCurrentPosition(pos => [pos.coords.latitude, pos.coords.longitude]);"
-    )
-    if coords:
-        st.session_state.lat, st.session_state.lng = coords
+# ----------------------
+# Get location
+# ----------------------
+if st.session_state.lat is None or st.session_state.lng is None:
+    location = streamlit_geolocation()
+    if location:
+        st.session_state.lat = location["latitude"]
+        st.session_state.lng = location["longitude"]
 
-# Fallback to IP-based location if browser location not available
-if st.session_state.get("lat") is None or st.session_state.get("lng") is None:
-    lat, lng, city, region, country = get_location_ip()
+# Fallback to IP if browser location not available
+if st.session_state.lat is None or st.session_state.lng is None:
+    lat, lng, city, _, _ = get_location_ip()
     st.session_state.lat = lat
     st.session_state.lng = lng
     st.session_state.city = city
 
-# ----------------------
-# Reverse geocode to get city name if missing
-# ----------------------
-if st.session_state.get("lat") and st.session_state.get("lng") and not st.session_state.get("city"):
+# Reverse geocode if city is missing
+if st.session_state.lat and st.session_state.lng and not st.session_state.city:
     try:
-        geolocator = Nominatim(user_agent="roam_app")
+        geolocator = Nominatim(user_agent="roam_app", language="en")
         location = geolocator.reverse((st.session_state.lat, st.session_state.lng), exactly_one=True)
-        city = location.raw.get("address", {}).get("city") or \
-               location.raw.get("address", {}).get("town") or \
-               location.raw.get("address", {}).get("village")
-        st.session_state.city = city
+        address = location.raw.get("address", {})
+        st.session_state.city = (
+            address.get("city")
+            or address.get("town")
+            or address.get("village")
+            or address.get("municipality")
+            or address.get("state")
+        )
     except:
         st.session_state.city = None
 
+# Display
 if st.session_state.city:
     st.markdown(
-        f"<p style='text-align:center; font-size:20px; font-weight:500;'>Looks like you're in {st.session_state.city}! Learn more about these spots nearby.</p>",
+        f"<p style='text-align:center; font-size:20px; font-weight:500;'>"
+        f"Looks like you're in {st.session_state.city}! Check out these spots nearby."
+        f"</p>",
         unsafe_allow_html=True
     )
 
